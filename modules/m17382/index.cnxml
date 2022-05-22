@@ -1,0 +1,175 @@
+<document xmlns="http://cnx.rice.edu/cnxml" xmlns:md="http://cnx.rice.edu/mdml" xmlns:bib="http://bibtexml.sf.net/">
+  <title>N = 16 FFT module</title>
+  <metadata>
+  <md:content-id>m17382</md:content-id><md:title>N = 16 FFT module</md:title>
+  <md:abstract>A very efficient length N = 16 FFT module that can be use alone or with the PFA or the WFTA.</md:abstract>
+  <md:uuid>64e0df14-1a63-403c-8783-58b1f1664340</md:uuid>
+</metadata>
+
+<content>
+    <section id="uid1">
+      <title>N=16 FFT module</title>
+      <para id="id2255547">A FORTRAN implementation of a length-16 FFT module to be
+used in a Prime Factor Algorithm program.</para>
+      <code id="id11505412" display="block">C
+C-------------------WFTA N=16----------------------------
+C
+  116   R1 = X(I(1)) + X(I(9))
+    R2 = X(I(1)) - X(I(9))
+    S1 = Y(I(1)) + Y(I(9))
+    S2 = Y(I(1)) - Y(I(9))
+    R3 = X(I(2)) + X(I(10))
+    R4 = X(I(2)) - X(I(10))
+    S3 = Y(I(2)) + Y(I(10))
+    S4 = Y(I(2)) - Y(I(10))
+    R5 = X(I(3)) + X(I(11))
+    R6 = X(I(3)) - X(I(11))
+    S5 = Y(I(3)) + Y(I(11))
+    S6 = Y(I(3)) - Y(I(11))
+    R7 = X(I(4)) + X(I(12))
+    R8 = X(I(4)) - X(I(12))
+    S7 = Y(I(4)) + Y(I(12))
+    S8 = Y(I(4)) - Y(I(12))
+    R9 = X(I(5)) + X(I(13))
+    R10= X(I(5)) - X(I(13))
+    S9 = Y(I(5)) + Y(I(13))
+    S10= Y(I(5)) - Y(I(13))
+    R11 = X(I(6)) + X(I(14))
+    R12 = X(I(6)) - X(I(14))
+    S11 = Y(I(6)) + Y(I(14))
+    S12 = Y(I(6)) - Y(I(14))
+    R13 = X(I(7)) + X(I(15))
+    R14 = X(I(7)) - X(I(15))
+    S13 = Y(I(7)) + Y(I(15))
+    S14 = Y(I(7)) - Y(I(15))
+    R15 = X(I(8)) + X(I(16))
+    R16 = X(I(8)) - X(I(16))
+    S15 = Y(I(8)) + Y(I(16))
+    S16 = Y(I(8)) - Y(I(16))
+    T1 = R1 + R9
+    T2 = R1 - R9
+    U1 = S1 + S9
+    U2 = S1 - S9
+    T3 = R3 + R11
+    T4 = R3 - R11
+    U3 = S3 + S11
+    U4 = S3 - S11
+    T5 = R5 + R13
+    T6 = R5 - R13
+    U5 = S5 + S13
+    U6 = S5 - S13
+    T7 = R7 + R15
+    T8 = R7 - R15
+    U7 = S7 + S15
+    U8 = S7 - S15
+    T9 = C81 * (T4 + T8)
+    T10= C81 * (T4 - T8)
+    U9 = C81 * (U4 + U8)
+    U10= C81 * (U4 - U8)
+    R1 = T1 + T5
+    R3 = T1 - T5
+    S1 = U1 + U5
+    S3 = U1 - U5
+    R5 = T3 + T7
+    R7 = T3 - T7
+    S5 = U3 + U7
+    S7 = U3 - U7
+    R9 = T2 + T10
+    R11= T2 - T10
+    S9 = U2 + U10
+    S11= U2 - U10
+    R13 = T6 + T9
+    R15 = T6 - T9
+    S13 = U6 + U9
+    S15 = U6 - U9
+    T1 = R4 + R16
+    T2 = R4 - R16
+    U1 = S4 + S16
+    U2 = S4 - S16
+    T3 = C81 * (R6 + R14)
+    T4 = C81 * (R6 - R14)
+    U3 = C81 * (S6 + S14)
+    U4 = C81 * (S6 - S14)
+    T5 = R8 + R12
+    T6 = R8 - R12
+    U5 = S8 + S12
+    U6 = S8 - S12
+    T7 = C162 * (T2 - T6)
+    T8 = C163 * T2 - T7
+    T9 = C164 * T6 - T7
+    T10 = R2 + T4
+    T11 = R2 - T4
+    R2 = T10 + T8
+    R4 = T10 - T8
+    R6 = T11 + T9
+    R8 = T11 - T9
+    U7 = C162 * (U2 - U6)
+    U8 = C163 * U2 - U7
+    U9 = C164 * U6 - U7
+    U10 = S2 + U4
+    U11 = S2 - U4
+    S2 = U10 + U8
+    S4 = U10 - U8
+    S6 = U11 + U9
+    S8 = U11 - U9
+    T7 = C165 * (T1 + T5)
+    T8 = T7 - C164 * T1
+    T9 = T7 - C163 * T5
+    T10 = R10 + T3
+    T11 = R10 - T3
+    R10 = T10 + T8
+    R12 = T10 - T8
+    R14 = T11 + T9
+    R16 = T11 - T9
+    U7 = C165 * (U1 + U5)
+    U8 = U7 - C164 * U1
+    U9 = U7 - C163 * U5
+    U10 = S10 + U3
+    U11 = S10 - U3
+    S10 = U10 + U8
+    S12 = U10 - U8
+    S14 = U11 + U9
+    S16 = U11 - U9
+C
+    X(I( 1)) = R1 + R5
+    X(I( 9)) = R1 - R5
+    Y(I( 1)) = S1 + S5
+    Y(I( 9)) = S1 - S5
+    X(I( 2)) = R2 + S10
+    X(I(16)) = R2 - S10
+    Y(I( 2)) = S2 - R10
+    Y(I(16)) = S2 + R10
+    X(I( 3)) = R9 + S13
+    X(I(15)) = R9 - S13
+    Y(I( 3)) = S9 - R13
+    Y(I(15)) = S9 + R13
+    X(I( 4)) = R8 - S16
+    X(I(14)) = R8 + S16
+    Y(I( 4)) = S8 + R16
+    Y(I(14)) = S8 - R16
+    X(I( 5)) = R3 + S7
+    X(I(13)) = R3 - S7
+    Y(I( 5)) = S3 - R7
+    Y(I(13)) = S3 + R7
+    X(I( 6)) = R6 + S14
+    X(I(12)) = R6 - S14
+    Y(I( 6)) = S6 - R14
+    Y(I(12)) = S6 + R14
+    X(I( 7)) = R11 - S15
+    X(I(11)) = R11 + S15
+    Y(I( 7)) = S11 + R15
+    Y(I(11)) = S11 - R15
+    X(I( 8)) = R4 - S12
+    X(I(10)) = R4 + S12
+    Y(I( 8)) = S4 + R12
+    Y(I(10)) = S4 - R12
+C
+    GOTO 20
+C
+ 
+Figure. Length-16 FFT Module
+</code>
+    </section>
+  </content>
+  <bib:file/>
+</document>

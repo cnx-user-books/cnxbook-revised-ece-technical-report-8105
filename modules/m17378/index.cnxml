@@ -1,0 +1,203 @@
+<document xmlns="http://cnx.rice.edu/cnxml" xmlns:md="http://cnx.rice.edu/mdml" xmlns:bib="http://bibtexml.sf.net/">
+  <title>N = 13   Winograd FFT module</title>
+  <metadata>
+  <md:content-id>m17378</md:content-id><md:title>N = 13   Winograd FFT module</md:title>
+  <md:abstract>A very efficient length N = 13 FFT module that can be use alone or with the PFA or the WFTA.  Designed by Howard Johnson in 1981.</md:abstract>
+  <md:uuid>0d8be640-6e12-44ef-9b47-39660b1104e5</md:uuid>
+</metadata>
+
+<content>
+    <section id="uid1">
+      <title>N=13 FFT module</title>
+      <para id="id2255547">A FORTRAN implementation of a length-13 FFT module to be
+used in a Prime Factor Algorithm program.</para>
+      <code id="id1169777959699" display="block">C
+    DATA  C131, C132 / 1.08333333, 0.30046261 /
+    DATA  C133, C134 / 0.74927933, 0.40113213 /
+    DATA  C135, C136 / 0.57514073, 0.52422664 /
+    DATA  C137, C138 / 0.51652078, 0.00770586 /
+    DATA  C139, C1310/ 0.42763400, 0.15180600 /
+    DATA  C1311,C1312/ 0.57944000, 1.15439534 /
+    DATA  C1313,C1314/ 0.90655220, 0.81857027 /
+    DATA  C1315,C1316/ 1.19713677, 0.86131171 /
+    DATA  C1317,C1318/ 1.10915484, 0.04274143 /
+    DATA  C1319,C1320/ 0.04524049, 0.29058457 /
+C
+C------------------WFTA N=13--------------------------------
+C
+  113   A1  = X(I(2)) + X(I(13))
+    A2  = X(I(3)) + X(I(12))
+    A3  = X(I(4)) + X(I(11))
+    A4  = X(I(5)) + X(I(10))
+    A5  = X(I(6)) + X(I(9))
+    A6  = X(I(7)) + X(I(8))
+    A7  = X(I(2)) - X(I(13))
+    A8  = X(I(3)) - X(I(12))
+    A9  = X(I(4)) - X(I(11))
+    A10 = X(I(5)) - X(I(10))
+    A11 = X(I(6)) - X(I(9))
+    A12 = X(I(7)) - X(I(8))
+    B1  = Y(I(2)) + Y(I(13))
+    B2  = Y(I(3)) + Y(I(12))
+    B3  = Y(I(4)) + Y(I(11))
+    B4  = Y(I(5)) + Y(I(10))
+    B5  = Y(I(6)) + Y(I(9))
+    B6  = Y(I(7)) + Y(I(8))
+    B7  = Y(I(2)) - Y(I(13))
+    B8  = Y(I(3)) - Y(I(12))
+    B9  = Y(I(4)) - Y(I(11))
+    B10 = Y(I(5)) - Y(I(10))
+    B11 = Y(I(6)) - Y(I(9))
+    B12 = Y(I(7)) - Y(I(8))
+    A13 = A2 + A5 + A6
+    A14 = A1 + A3 + A4
+    A15 = A13 + A14
+    A16 = A8 + A11 + A12
+    A17 = A7 + A9 - A10
+    A18 = A2 - A6
+    A19 = A3 - A4
+    A20 = A1 - A4
+    A21 = A5 - A6
+    A22 = A18 - A19
+    A23 = A20 - A21
+    A24 = A18 + A19
+    A25 = A20 + A21
+    A26 = A8 - A12
+    A27 = A7 - A9
+    A28 = A8 - A11
+    A29 = A7 + A10
+    A30 = A11 - A12
+    A31 =-A9 - A10
+    B13 = B2 + B5 + B6
+    B14 = B1 + B3 + B4
+    B15 = B13 + B14
+    B16 = B8 + B11 + B12
+    B17 = B7 + B9 - B10
+    B18 = B2 - B6
+    B19 = B3 - B4
+    B20 = B1 - B4
+    B21 = B5 - B6
+    B22 = B18 - B19
+    B23 = B20 - B21
+    B24 = B18 + B19
+    B25 = B20 + B21
+    B26 = B8 - B12
+    B27 = B7 - B9
+    B28 = B8 - B11
+    B29 = B7 + B10
+    B30 = B11 - B12
+    B31 =-B9 - B10
+    AM0  = X(I(1)) + A15
+    AM2  = (A13 - A14) * C132
+    AM5  = (A16 + A17) * C135
+    AM6  =  A22 * C136
+    AM7  =  A23 * C137
+    AM8  = (A22 + A23) * C138
+    AM9  =  A24 * C139
+    AM10 =  A25 * C1310
+    AM11 = (A24 - A25) * C1311
+    AM14 = (A26 + A27) * C1314
+    AM17 = (A28 + A29) * C1317
+    AM20 = (A30 + A31) * C1320
+    BM0  = Y(I(1)) + B15
+    BM2  = (B13 - B14) * C132
+    BM5  = (B16 + B17) * C135
+    BM6  =  B22 * C136
+    BM7  =  B23 * C137
+    BM8  = (B22 + B23) * C138
+    BM9  =  B24 * C139
+    BM10 =  B25 * C1310
+    BM11 = (B24 - B25) * C1311
+    BM14 = (B26 + B27) * C1314
+    BM17 = (B28 + B29) * C1317
+    BM20 = (B30 + B31) * C1320
+    CC0  = AM0 - A15 * C131
+    CC1  = AM7 + AM6 - AM2
+    CC2  = AM7 + AM8 + AM2
+    CC3  = AM8 - AM6 - AM2
+    CC4  = CC0 + AM9 + AM10
+    CC5  = CC0 - AM10 - AM11
+    CC6  = CC0 - AM9 + AM11
+    CC7  = AM14 - A26 * C1312
+    CC8  = AM14 - A27 * C1313
+    CC9  = -AM17 + A28 * C1315
+    CC10 = -AM17 + A29 * C1316
+    CC11 =  AM20 - A30 * C1318
+    CC12 =  AM20 + A31 * C1319
+    CC13 = -AM5  + A16 * C133
+    CC14 = -AM5  + A17 * C134
+    CC15 = CC1 + CC4
+    CC16 = CC2 + CC5
+    CC17 = CC5 - CC2
+    CC18 = CC3 + CC6
+    CC19 = CC4 - CC1
+    CC20 = CC6 - CC3
+    CC21 = CC14 + CC7 + CC9
+    CC22 = CC10 - CC12 + CC13
+    CC23 =-CC7 - CC11 + CC14
+    CC24 = CC9 - CC11 - CC14
+    CC25 = CC8 + CC12 + CC13
+    CC26 = CC13 - CC8 - CC10
+    DD0  = BM0 - B15 * C131
+    DD1  = BM7 + BM6 - BM2
+    DD2  = BM7 + BM8 + BM2
+    DD3  = BM8 - BM6 - BM2
+    DD4  = DD0 + BM9 + BM10
+    DD5  = DD0 - BM10 - BM11
+    DD6  = DD0 - BM9 + BM11
+    DD7  = BM14 - B26 * C1312
+    DD8  = BM14 - B27 * C1313
+    DD9  = -BM17 + B28 * C1315
+    DD10 = -BM17 + B29 * C1316
+    DD11 =  BM20 - B30 * C1318
+    DD12 =  BM20 + B31 * C1319
+    DD13 = -BM5  + B16 * C133
+    DD14 = -BM5  + B17 * C134
+    DD15 = DD1 + DD4
+    DD16 = DD2 + DD5
+    DD17 = DD5 - DD2
+    DD18 = DD3 + DD6
+    DD19 = DD4 - DD1
+    DD20 = DD6 - DD3
+    DD21 = DD14 + DD7 + DD9
+    DD22 = DD10 - DD12 + DD13
+    DD23 =-DD7 - DD11 + DD14
+    DD24 = DD9 - DD11 - DD14
+    DD25 = DD8 + DD12 + DD13
+    DD26 = DD13 - DD8 - DD10
+    X(I(1))  = AM0
+    X(I(2))  = CC15 - DD21
+    X(I(3))  = CC16 - DD22
+    X(I(4))  = CC17 - DD23
+    X(I(5))  = CC18 - DD24
+    X(I(6))  = CC19 - DD25
+    X(I(7))  = CC20 - DD26
+    X(I(8))  = CC20 + DD26
+    X(I(9))  = CC19 + DD25
+    X(I(10)) = CC18 + DD24
+    X(I(11)) = CC17 + DD23
+    X(I(12)) = CC16 + DD22
+    X(I(13)) = CC15 + DD21
+    Y(I(1))  = BM0
+    Y(I(2))  = CC21 + DD15
+    Y(I(3))  = CC22 + DD16
+    Y(I(4))  = CC23 + DD17
+    Y(I(5))  = CC24 + DD18
+    Y(I(6))  = CC25 + DD19
+    Y(I(7))  = CC26 + DD20
+    Y(I(8))  =-CC26 + DD20
+    Y(I(9))  =-CC25 + DD19
+    Y(I(10)) =-CC24 + DD18
+    Y(I(11)) =-CC23 + DD17
+    Y(I(12)) =-CC22 + DD16
+    Y(I(13)) =-CC21 + DD15
+C
+    GOTO 20
+C
+ 
+Figure:  Length-13 FFT Module
+</code>
+    </section>
+  </content>
+  <bib:file/>
+</document>

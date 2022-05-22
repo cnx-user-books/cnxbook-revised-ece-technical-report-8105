@@ -1,0 +1,325 @@
+<document xmlns="http://cnx.rice.edu/cnxml" xmlns:m="http://www.w3.org/1998/Math/MathML" xmlns:md="http://cnx.rice.edu/mdml" xmlns:bib="http://bibtexml.sf.net/">
+  <title>Large DFT Modules: 11, 13, 16, 17, 19, and 25</title>
+  <metadata>
+  <md:content-id>m17413</md:content-id><md:title>Large DFT Modules: 11, 13, 16, 17, 19, and 25</md:title>
+  <md:abstract>Details of the generation of very efficient length 11, 13, 17, 19, and 25 FFTs using the techniques of Winograd. Originally, Technical Report number 8105 from the EE department of Rice University in 1981, by H. W. Johnson and C. S. Burrus</md:abstract>
+  <md:uuid>50b57b6b-23fa-4914-9b51-43a1f7d53475</md:uuid>
+</metadata>
+
+<content>
+    <section id="cid1">
+      <title>Introduction</title>
+      <para id="id2253706">This report describes three large DFT modules (17,19,25) which were developed by the first author, Howard Johnson, in June of 1981, and two previously undocumented modules (11,13) which were originally generated at Stanford in 1978 <link target-id="bid0"/>.</para>
+      <para id="id2253719">The length 17 and 19 modules were created in the style of Winograd's convolutional DFT programs with strict adherence to three additional module development principles. First, as much code as possible was automatically generated. This included use of FORTRAN programs to generate the input and output mapping statements and the multiplication statements, and heavy use of EDIT commands to copy redundant sections of code. The code for imaginary data manipulation was copied directly from a working listing of code for the real part. All discussion below therefore centers on producing code only for the real part of the input data array. Even the EDIT commands for copying sections of code and substituting variable names were themselves listed in a command file. In this way, the programmer was prevented from introducing occasional typographical errors which are the bane of the DFT module debugger. Errors which did occur tended to be very large and obvious. Test routines were written to test particularly difficult sections of code before they were inserted into the DFT module (such as the modulo <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>8</m:mn></m:msup><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:math> convolution subsection).</para>
+      <para id="id2253763">Once the reduction, or PRE-WEAVE, section was written, the reconstruction, or POST-WEAVE, section was arranged to be the transpose of the reduction equations, according to the method of 'transposing the tensor' <link target-id="bid1"/>. Although the problem of minimizing the number of additions in a module is not necessarily solved by transposing the tensor, due to the inordinate difficulty of finding suitable substitutions which would abate the addition count, and the high probability of error involved in making such substitutions, it was decided to use this method. This method also provides a convenient way to check the correctness of the reconstruction procedure by computing the matrices of the reduction and reconstruction subroutines and testing to see that they are indeed a transpose pair.</para>
+      <para id="id2253784">Intrinsic to the method of transposing the tensor is the fact that the matrix B used to compute the algorithm's multiplication coefficients from the Nth roots of unity is generally more complicated than either the reduction matrix or its transpose, the reconstruction matrix. This result is a consequence of B having been generated from Toom-Cook polynomial reconstruction procedures and also CRT polynomial reconstructions, which are both known to be more complicated than their associated reduction procedures. The problem of finding B in order to compute a set of multipliers may be neatly circumvented by directly solving a set of linear equations to find a coefficient vector which makes the algorithm work. The details of this trick are not reported here, but may be found in <link target-id="bid2"/>. Suffice to say that given working FORTRAN subroutines for the reduction and reconstruction procedures, a FORTRAN program exists which will solve for the correct coefficients.</para>
+      <para id="id2253809">The length 25 module does not follow the traditional Winograd approach. This module is an in-line code version of a common-factor 5x5 DFT. Each length 5 DFT is a prime-length convolutional module. The output unscrambling is included in the assignment statements at the end of the program. Some of the length 5 modules used in this program are implemented as scaled versions of conventional length 5 modules in order to save some multiplies by 1/4. The scaling factors are then compensated for by adjusting the twiddle factors. This module has three multiply sections, one for the row DFT's with a data expansion factor of 6/5, one for the twiddle factors (expansion=33/25) and on for the column DFT's (expansion=6/5).</para>
+      <para id="id2253836">Modules for lengths 11 and 13 are very similar in spirit to the length 19 and 17 modules. Derivations are presented for both the 11 and 13 length modules which are consistent with the listings, although these interpretations may not agree with the original intentions of the designer <link target-id="bid0"/> they are correct in the sense that the algorithms could have been derived in the stated manner. Both the modules are of prime length and they are implemented in Winograd's convolutional style.</para>
+      <para id="id2253853">FORTRAN listings for all five modules are included with this report in a subroutine form suitable for use in Burrus' PFA program <link target-id="bid3"/>. Addition and multiplication counts given are for complex input data.</para>
+    </section>
+    <section id="cid2">
+      <title>17 Module: 314 Adds / 70 Mpys</title>
+      <para id="id2253873">This module closely follows the traditional Winograd prime-length approach.</para>
+      <list id="id2253878" list-type="enumerated"><item id="uid1">Use the index map <m:math><m:mrow><m:mover accent="true"><m:mi>x</m:mi><m:mo>¯</m:mo></m:mover><m:mrow><m:mo>(</m:mo><m:mi>n</m:mi><m:mo>)</m:mo></m:mrow><m:mo>=</m:mo><m:mi>x</m:mi><m:mrow><m:mo>(</m:mo><m:mo>&lt;</m:mo><m:msup><m:mn>3</m:mn><m:mi>n</m:mi></m:msup><m:msub><m:mo>&gt;</m:mo><m:mrow><m:mi>m</m:mi><m:mi>o</m:mi><m:mi>d</m:mi><m:mn>17</m:mn></m:mrow></m:msub><m:mo>)</m:mo></m:mrow></m:mrow></m:math> to convert the DFT into a length 16 convolution, plus a correction term for the DC component.
+</item>
+        <item id="uid2">Reduce the length 16 convolution modulo all the irreducible factors of <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>16</m:mn></m:msup><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:math>. (Irreducible over the rationals).
+<equation id="id2253990"><m:math mode="display"><m:mtable displaystyle="true"><m:mtr><m:mtd columnalign="right"><m:mrow><m:mi>m</m:mi><m:mi>o</m:mi><m:mi>d</m:mi><m:msup><m:mi>z</m:mi><m:mn>8</m:mn></m:msup><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:mtd><m:mtd><m:mo>:</m:mo></m:mtd><m:mtd columnalign="left"><m:mrow><m:mi>r</m:mi><m:mn>108</m:mn><m:mo>-</m:mo><m:mi>r</m:mi><m:mn>1</m:mn><m:mn>1</m:mn><m:mn>5</m:mn></m:mrow></m:mtd></m:mtr><m:mtr><m:mtd columnalign="right"><m:mrow><m:mi>m</m:mi><m:mi>o</m:mi><m:mi>d</m:mi><m:msup><m:mi>z</m:mi><m:mn>8</m:mn></m:msup><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:mtd><m:mtd><m:mo>:</m:mo></m:mtd><m:mtd columnalign="left"><m:mrow><m:mi>r</m:mi><m:mn>100</m:mn><m:mo>-</m:mo><m:mi>r</m:mi><m:mn>107</m:mn></m:mrow></m:mtd></m:mtr></m:mtable></m:math></equation>
+From <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>8</m:mn></m:msup><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:math> data
+<equation id="id2254349"><m:math mode="display"><m:mtable displaystyle="true"><m:mtr><m:mtd columnalign="right"><m:mrow><m:mi>m</m:mi><m:mi>o</m:mi><m:mi>d</m:mi><m:msup><m:mi>z</m:mi><m:mn>4</m:mn></m:msup><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:mtd><m:mtd><m:mo>:</m:mo></m:mtd><m:mtd columnalign="left"><m:mrow><m:mi>r</m:mi><m:mn>31</m:mn><m:mo>-</m:mo><m:mi>r</m:mi><m:mn>34</m:mn></m:mrow></m:mtd></m:mtr><m:mtr><m:mtd columnalign="right"><m:mrow><m:mi>m</m:mi><m:mi>o</m:mi><m:mi>d</m:mi><m:msup><m:mi>z</m:mi><m:mn>4</m:mn></m:msup><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:mtd><m:mtd><m:mo>:</m:mo></m:mtd><m:mtd columnalign="left"><m:mrow><m:mi>r</m:mi><m:mn>200</m:mn><m:mo>-</m:mo><m:mi>r</m:mi><m:mn>203</m:mn></m:mrow></m:mtd></m:mtr></m:mtable></m:math></equation>
+From <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>4</m:mn></m:msup><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:math> data
+<equation id="id2254465"><m:math mode="display"><m:mtable displaystyle="true"><m:mtr><m:mtd columnalign="right"><m:mrow><m:mi>m</m:mi><m:mi>o</m:mi><m:mi>d</m:mi><m:msup><m:mi>z</m:mi><m:mn>2</m:mn></m:msup><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:mtd><m:mtd><m:mo>:</m:mo></m:mtd><m:mtd columnalign="left"><m:mrow><m:mi>r</m:mi><m:mn>35</m:mn><m:mo>-</m:mo><m:mi>r</m:mi><m:mn>36</m:mn></m:mrow></m:mtd></m:mtr><m:mtr><m:mtd columnalign="right"><m:mrow><m:mi>m</m:mi><m:mi>o</m:mi><m:mi>d</m:mi><m:msup><m:mi>z</m:mi><m:mn>2</m:mn></m:msup><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:mtd><m:mtd><m:mo>:</m:mo></m:mtd><m:mtd columnalign="left"><m:mrow><m:mi>r</m:mi><m:mn>204</m:mn><m:mo>-</m:mo><m:mi>r</m:mi><m:mn>205</m:mn></m:mrow></m:mtd></m:mtr></m:mtable></m:math></equation>
+From <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>2</m:mn></m:msup><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:math> data
+<equation id="id2254582"><m:math mode="display"><m:mtable displaystyle="true"><m:mtr><m:mtd columnalign="right"><m:mrow><m:mi>m</m:mi><m:mi>o</m:mi><m:mi>d</m:mi><m:mi>z</m:mi><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:mtd><m:mtd><m:mo>:</m:mo></m:mtd><m:mtd columnalign="left"><m:mrow><m:mi>r</m:mi><m:mn>38</m:mn></m:mrow></m:mtd></m:mtr><m:mtr><m:mtd columnalign="right"><m:mrow><m:mi>m</m:mi><m:mi>o</m:mi><m:mi>d</m:mi><m:mi>z</m:mi><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:mtd><m:mtd><m:mo>:</m:mo></m:mtd><m:mtd columnalign="left"><m:mrow><m:mi>r</m:mi><m:mn>37</m:mn></m:mrow></m:mtd></m:mtr></m:mtable></m:math></equation></item>
+        <item id="uid3">Reduce the convolution modulo <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>2</m:mn></m:msup><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:math> using Toom-Cook factors of <m:math><m:mi>z</m:mi></m:math>, <m:math><m:mrow><m:mn>1</m:mn><m:mo>/</m:mo><m:mi>z</m:mi></m:mrow></m:math> and <m:math><m:mrow><m:mi>z</m:mi><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:math>. This creates variables r35, r36, and r314.
+</item>
+        <item id="uid4">Reduce the modulo <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>4</m:mn></m:msup><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:math> convolution with an iterated Toom-Cook reduction using the factors <m:math><m:mi>z</m:mi></m:math>, <m:math><m:mrow><m:mn>1</m:mn><m:mo>/</m:mo><m:mi>z</m:mi></m:mrow></m:math> and <m:math><m:mrow><m:mi>z</m:mi><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:math> for the first step, and the factors <m:math><m:mi>z</m:mi></m:math>, <m:math><m:mrow><m:mn>1</m:mn><m:mo>/</m:mo><m:mi>z</m:mi></m:mrow></m:math> and <m:math><m:mrow><m:mi>z</m:mi><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:math> for the second step. The first step produces r310 and r39, and the second step computes r313, r312 and r311. This is exactly the reduction procedure used in Nussbaumer's <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>4</m:mn></m:msup><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:math> convolution algorithm.
+</item>
+        <item id="uid5">Patch up the DC term by adding the <m:math><m:mrow><m:mi>z</m:mi><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:math> reduction result to <m:math><m:mrow><m:mi>x</m:mi><m:mo>(</m:mo><m:mi>i</m:mi><m:mo>(</m:mo><m:mn>1</m:mn><m:mo>)</m:mo><m:mo>)</m:mo></m:mrow></m:math>.
+</item>
+        <item id="uid6">Use Nussbaumer's <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>8</m:mn></m:msup><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:math> convolution algorithm <link target-id="bid4"/> on r108-r115. This is the only exception to the strict use of transposing the tensor, as his algorithm saves two additions by computing the transposed reconstruction procedure in an obscure fashion. The result, however, is an exact calculation of the transpose. This reduction computes twenty-one values, r315-r335, which must be weighted by coefficients to produce the reconstructed <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>8</m:mn></m:msup><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:math> output, t115-t135.
+</item>
+        <item id="uid7">Weight the variables r31-r39, r310-r314 by coefficients to produce t11-t19, t110-t114.
+</item>
+        <item id="uid8">The reconstruction procedure for the <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>8</m:mn></m:msup><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:math> terms is a straightforward transpose of the reduction procedure.
+</item>
+        <item id="uid9">The <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>16</m:mn></m:msup><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:math> convolution result is reconstructed from the <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>8</m:mn></m:msup><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:math> (real)
+and <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>8</m:mn></m:msup><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:math> (imaginary) vectors and mapped back to the outputs using the
+reverse of the input map.
+</item>
+        <item id="uid10">All coefficients were computed using the author's QR decomposition
+linear equation solver and are accurate to at least 14 places.
+</item>
+      </list>
+    </section>
+    <section id="cid3">
+      <title>Length 19 Module: 372 Adds / 76 Mpys</title>
+      <para id="id2255083">This module closely follows the traditional Winograd prime-length approach.</para>
+      <list id="id2255088" list-type="enumerated"><item id="uid11">Use the index map <m:math><m:mrow><m:mover accent="true"><m:mi>x</m:mi><m:mo>¯</m:mo></m:mover><m:mrow><m:mo>(</m:mo><m:mi>n</m:mi><m:mo>)</m:mo></m:mrow><m:mo>=</m:mo><m:mi>x</m:mi><m:mrow><m:mo>(</m:mo><m:mo>&lt;</m:mo><m:msup><m:mn>2</m:mn><m:mi>n</m:mi></m:msup><m:msub><m:mo>&gt;</m:mo><m:mrow><m:mi>m</m:mi><m:mi>o</m:mi><m:mi>d</m:mi><m:mn>19</m:mn></m:mrow></m:msub><m:mo>)</m:mo></m:mrow></m:mrow></m:math> to convert the DFT into a length 18 convolution plus a correction term for the DC component.
+</item>
+        <item id="uid12">Reduce the length 16 convolution modulo <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>9</m:mn></m:msup><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:math> and <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>9</m:mn></m:msup><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:math>.
+<equation id="id2255209"><m:math mode="display"><m:mtable displaystyle="true"><m:mtr><m:mtd columnalign="right"><m:mrow><m:mi>m</m:mi><m:mi>o</m:mi><m:mi>d</m:mi><m:msup><m:mi>z</m:mi><m:mn>9</m:mn></m:msup><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:mtd><m:mtd><m:mo>:</m:mo></m:mtd><m:mtd columnalign="left"><m:mrow><m:mi>r</m:mi><m:mn>100</m:mn><m:mo>-</m:mo><m:mi>r</m:mi><m:mn>108</m:mn></m:mrow></m:mtd></m:mtr><m:mtr><m:mtd columnalign="right"><m:mrow><m:mi>m</m:mi><m:mi>o</m:mi><m:mi>d</m:mi><m:msup><m:mi>z</m:mi><m:mn>9</m:mn></m:msup><m:mo>+</m:mo><m:mn>9</m:mn></m:mrow></m:mtd><m:mtd><m:mo>:</m:mo></m:mtd><m:mtd columnalign="left"><m:mrow><m:mi>r</m:mi><m:mn>109</m:mn><m:mo>-</m:mo><m:mi>r</m:mi><m:mn>117</m:mn></m:mrow></m:mtd></m:mtr></m:mtable></m:math></equation></item>
+        <item id="uid13">Use Nussbaumer's <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>9</m:mn></m:msup><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:math> convolution algorithm on r100-r108. This is a transposed tensor method, however it again uses an obscure reconstruction procedure. This algorithm computes nineteen intermediate quantities, r31-r319, which are then weighted against nineteen coefficients to produce t11-t119. This data is then partially reconstructed to yield the final result of the <m:math><m:mrow><m:mi>m</m:mi><m:mi>o</m:mi><m:mi>d</m:mi><m:msup><m:mi>z</m:mi><m:mn>9</m:mn></m:msup><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:math> convolution, t32-t310.
+</item>
+        <item id="uid14">In the course of the <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>9</m:mn></m:msup><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:math> convolution algorithm the <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>9</m:mn></m:msup><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:math> data is reduced modulo <m:math><m:mrow><m:mi>z</m:mi><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:math> and stored in r31. This quantity is added to <m:math><m:mrow><m:mi>x</m:mi><m:mo>(</m:mo><m:mi>i</m:mi><m:mo>(</m:mo><m:mn>1</m:mn><m:mo>)</m:mo><m:mo>)</m:mo></m:mrow></m:math> to patch up the DC term.
+</item>
+        <item id="uid15">An algebraic trick is used to compute the <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>9</m:mn></m:msup><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:math> convolution using the <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>9</m:mn></m:msup><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:math> algorithm. Suppose there exists a ring homomorphism H which maps elements of the ring of real polynomials modulo <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>9</m:mn></m:msup><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:math> into the ring of polynomials modulo <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>9</m:mn></m:msup><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:math>. Then <m:math><m:mi>H</m:mi></m:math> could be used on the <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>9</m:mn></m:msup><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:math> data, the resulting polynomial could be convolved in the modulo <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>9</m:mn></m:msup><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:math> domain using the existing procedure, and the output of that procedure could be mapped back through <m:math><m:msup><m:mi>H</m:mi><m:mrow><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:msup></m:math> into the modulo <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>9</m:mn></m:msup><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:math> domain. Such a homomorphism does exist, and moreover it happens to be its own inverse. <m:math><m:mrow><m:mi>H</m:mi><m:mo>(</m:mo><m:mi>p</m:mi><m:mo>)</m:mo></m:mrow></m:math> where <m:math><m:mi>p</m:mi></m:math> is a polynomial (in either <m:math><m:mrow><m:mi>R</m:mi><m:mrow><m:mo>[</m:mo><m:mi>x</m:mi><m:mo>]</m:mo></m:mrow><m:mo>/</m:mo><m:msup><m:mi>z</m:mi><m:mn>9</m:mn></m:msup><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:math> or <m:math><m:mrow><m:mi>R</m:mi><m:mrow><m:mo>[</m:mo><m:mi>x</m:mi><m:mo>]</m:mo></m:mrow><m:mo>/</m:mo><m:msup><m:mi>z</m:mi><m:mn>9</m:mn></m:msup><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:math>) may be formed from <m:math><m:mi>p</m:mi></m:math> by negating the sign on all odd-numbered coefficients, that is, <m:math><m:mrow><m:mi>H</m:mi><m:mo>(</m:mo><m:mi>p</m:mi><m:mo>)</m:mo><m:mo>(</m:mo><m:mi>z</m:mi><m:mo>)</m:mo><m:mo>=</m:mo><m:mi>p</m:mi><m:mo>(</m:mo><m:mo>-</m:mo><m:mi>z</m:mi><m:mo>)</m:mo></m:mrow></m:math>. The alternate negation of data values going into and coming out of the <m:math><m:mrow><m:mi>m</m:mi><m:mi>o</m:mi><m:mi>d</m:mi><m:msup><m:mi>z</m:mi><m:mn>9</m:mn></m:msup><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:math> convolution algorithm is accomplished without an increase in computing time by appropriate placement of negative signs. The nineteen intermediate values formed are r320-r338 which are then weighted by the (purely imaginary) coefficients to produce t120-t138. A partial reconstruction yields the <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>9</m:mn></m:msup><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:math> convolution result, t311-t319.
+</item>
+        <item id="uid16">The <m:math><m:msup><m:mi>z</m:mi><m:mrow><m:mn>18</m:mn><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:msup></m:math> convolution result is reconstructed from the <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>9</m:mn></m:msup><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:math> (real)
+and <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>9</m:mn></m:msup><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:math> (imaginary) vectors and mapped back to the outputs using the
+reverse of the input map.
+</item>
+        <item id="uid17">All coefficients were computed using the author's QR decomposition
+linear equation solver and are accurate to at least 14 places.
+</item>
+      </list>
+    </section>
+    <section id="cid4">
+      <title>Length 25 Module: 420 Adds / 132 Mpys </title>
+      <para id="id2255905">This module is a common factor type module which uses length 5 convolutional DFT submodules. The length 5 submodules are implemented in a transposed tensor configuration using an index map <m:math><m:mrow><m:mi>x</m:mi><m:mrow><m:mo>(</m:mo><m:mover accent="true"><m:mi>n</m:mi><m:mo>¯</m:mo></m:mover><m:mo>)</m:mo></m:mrow><m:mo>=</m:mo><m:mi>x</m:mi><m:mrow><m:mo>(</m:mo><m:mo>&lt;</m:mo><m:msup><m:mn>2</m:mn><m:mi>n</m:mi></m:msup><m:msub><m:mo>&gt;</m:mo><m:mrow><m:mi>m</m:mi><m:mi>o</m:mi><m:mi>d</m:mi><m:mn>5</m:mn></m:mrow></m:msub><m:mo>)</m:mo></m:mrow></m:mrow></m:math> followed by a reduction modulo all the irreducible factors of <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>4</m:mn></m:msup><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:math>. The <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>2</m:mn></m:msup><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:math> convolution is implemented using Toom-Cook factors of <m:math><m:mi>z</m:mi></m:math>, <m:math><m:mrow><m:mn>1</m:mn><m:mo>/</m:mo><m:mi>z</m:mi></m:mrow></m:math> and <m:math><m:mrow><m:mi>z</m:mi><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:math>. The reconstruction matrix is exactly the transpose of the reduction procedure. The coefficients for the length 5 submodules were found using the author's QR procedure, and the twiddle factors were generated in a special FORTRAN program. The details of saving multiplies by scaling some of the prime length submodules in a common factor algorithm are discussed below in <link target-id="cid5"/>. This length 25 module has a total of 132 multiplies and 420 adds. Using Winograd's decomposition of the length 25 OFT into two length 5 DFT's and a length 20 convolution the best operation count generated by this author was 108 multiplies and 604 adds.</para>
+    </section>
+    <section id="cid5">
+      <title>Scaling in a Common Factor DFT</title>
+      <para id="id2253538">Scaling short length DFT algorithms can sometimes save multiplies. The prime length modules <m:math><m:mrow><m:mo>(</m:mo><m:mi>p</m:mi><m:mo>&gt;</m:mo><m:mn>2</m:mn><m:mo>)</m:mo></m:mrow></m:math> generally include one constant equal to <m:math><m:mrow><m:mn>1</m:mn><m:mo>/</m:mo><m:mo>(</m:mo><m:mi>p</m:mi><m:mo>-</m:mo><m:mn>1</m:mn><m:mo>)</m:mo></m:mrow></m:math>, corresponding to convolution modulo <m:math><m:mrow><m:mi>x</m:mi><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:math> This convenient constant can in some cases be exploited. One particularly nice example is the length 25 DFT.</para>
+      <para id="id2253602">Use length 5 DFT modules to put together a length 25 DFT with Singleton's algorithm. This results in an algorithm which uses the length 5 module ten times, and has sixteen non-trivial twiddle factors. Counting a twiddle factor as 3/2 multiplies, and using DFT modules with 5 multiplies, the full length 25 algorithm will have 74 multiplies.</para>
+      <para id="id2253612">In order to exploit the constant 1/4 which appears in each length 5 module the basic length 5 module must be modified to create alternate modules A and B (Figure I). The regular length 5 DFT is represented as R. Algorithm A computes the same DFT, but with outputs 1 through 4 scaled up by a factor of 4. Algorithm B expects inputs 1 through 4 to be scaled down by a factor of 1/4. Algorithms A and B have each traded 1 multiply for 2 additions. The additions are used to implement the -factor of 4 which appears in both algorithms.</para>
+      <para id="id2253623">To implement a scaled algorithm:</para>
+      <list id="id2253626" list-type="labeled-item"><item id="uid18"><label>i</label> Assume the input data has been appropriately mapped into a 5 by 5 array.
+</item>
+        <item id="uid19"><label>ii</label> Use <m:math><m:mi>R</m:mi></m:math> on the first column of data and A on all other columns. This will scale the data in the twiddle area<footnote id="id1170769357104">The twiddle area is the collection of data locations which will be multiplied by non-trivial twiddles and in this instance is composed of all data which falls both in the last four columns and the last four rows of the data array.</footnote> up by a factor of 4.
+</item>
+        <item id="uid21"><label>iii</label> Scale down all twiddle factors by a factor of 1/16. This leaves data in the twiddle area scaled down by a composite factor of 1/4 when compared to a normal length 25 DFT.
+</item>
+        <item id="uid22"><label>iv</label> Use <m:math><m:mi>R</m:mi></m:math> on the first row of data and use B on all other rows. <m:math><m:mi>B</m:mi></m:math> is modified to expect the scaled down data in the twiddle area.
+</item>
+      </list>
+      <para id="id2256387">Since 4 A's and 4 B's were used, a total trade has been made of 8 multiplies for 16 adds. Such a trade may in many instances be a reasonable exchange. The great thing about this scaling is that the D.C. terms did not have to be scaled, which would have generated more adds in modification A and multiplies in modification B. No additional counter-scaling multiplies were needed in this special example because the twiddle factor were available to absorb the scaling mismatches. Similar approaches should be possible for lengths 9, 49, and 121.</para>
+      <para id="id2256399">The PFA case is similar in spirit, but is lacking the twiddle factors to perform counter-scaling. One of the modules will have to be modified to perform the counter-scaling function.</para>
+      <para id="id2256405">Two basic facts will be needed. First, any Winograd-type prime length DFT module contains one constant equal to <m:math><m:mrow><m:mn>1</m:mn><m:mo>/</m:mo><m:mo>(</m:mo><m:mi>p</m:mi><m:mo>-</m:mo><m:mn>1</m:mn><m:mo>)</m:mo></m:mrow></m:math> and can be modified like algorithm A to scale up all of its outputs except the DC term. This modification trades one multiply for the number of adds needed to implement a multiply by <m:math><m:mrow><m:mo>(</m:mo><m:mi>p</m:mi><m:mo>-</m:mo><m:mn>1</m:mn><m:mo>)</m:mo></m:mrow></m:math>. Secondly, any Winograd-type prime length DFT module can be modified to scale all of its outputs by an arbitrary constant at the expense of only one multiply. This is accomplished by nesting the scaling constant with the multiplies in the middle of the Winograd module. Since only one of the module's original constants is trivial (that is the unity constant on the DC term) only one extra multiply is generated. This procedure assumes the module has first been re-arranged to eliminate the "cross" computation as illustrated in Figure II. Such a rearrangement can always be accomplished in prime length modules.</para>
+      <para id="id2256466">Now, suppose we combine length p and q modules with Good's prime factor algorithm (not using twiddles). The following scaling procedure will work:</para>
+      <list id="id2256471" list-type="labeled-item"><item id="uid23"><label>i</label> Assume the input data has been appropriately loaded into a <m:math><m:mrow><m:mi>p</m:mi><m:mi>x</m:mi><m:mi>q</m:mi></m:mrow></m:math> data array
+</item>
+        <item id="uid24"><label>ii</label> Scale the non-DC outputs of the length <m:math><m:mi>p</m:mi></m:math> module and apply the modified module to all columns of the data array.
+</item>
+        <item id="uid25"><label>iii</label> Now all the rows are scaled by <m:math><m:mrow><m:mo>(</m:mo><m:mi>p</m:mi><m:mo>-</m:mo><m:mn>1</m:mn><m:mo>)</m:mo></m:mrow></m:math> except the zeroeth row, corresponding to the DC outputs of the length <m:math><m:mi>p</m:mi></m:math> modules. Apply a normal length <m:math><m:mi>q</m:mi></m:math> module to the zeroeth row. Modify the length <m:math><m:mi>q</m:mi></m:math> module to scale by <m:math><m:mrow><m:mn>1</m:mn><m:mo>/</m:mo><m:mo>(</m:mo><m:mi>p</m:mi><m:mo>-</m:mo><m:mn>1</m:mn><m:mo>)</m:mo></m:mrow></m:math> and apply the modified version to all the other rows. The DFT is now complete.
+</item>
+      </list>
+      <para id="id2256605">As an example, consider the 3x7 DFT. In the length 3 module scaling the non-DC outputs trades one multiply for one add. When the scaled DFT is constructed, the modified length 3 module is used 7 times. But two rows must be scaled by modified length 7 modules, which brings the total multiply savings to 5 at a cost of 7 adds. This looks like a nice tradeoff. The total number of multiplies in a normal 3x7 PFA is 38.</para>
+      <para id="id2256615">These ideas can be expanded to multidimensional cases, although it quickly becomes difficult to keep track of which rows and columns need to be counter-scaled.</para>
+<figure id="id1170778587954"><media id="id1170771899330" alt=""><image src="../../media/figureI.png" mime-type="image/png"/></media><caption>Length 5 DFT
+Algorithm R</caption></figure>
+<figure id="id5210662"><media id="id7070802" alt=""><image src="../../media/figureII.png" mime-type="image/png"/></media><caption>Crossed Flow Graph</caption></figure>    
+<figure id="id7938792"><media id="id1170772267551" alt=""><image src="../../media/figureIII.png" mime-type="image/png"/></media><caption>Equivalent Uncrossed Flow Graph</caption></figure>
+<figure id="id1170773459465"><media id="id1170771891102" alt=""><image src="../../media/figureIV.png" mime-type="image/png"/></media><caption>Length 5 DFT
+Algorithm A</caption></figure>
+<figure id="id4379406"><media id="id1170770484240" alt=""><image src="../../media/figureV.png" mime-type="image/png"/></media><caption>Length 5 DFT
+Algorithm B</caption></figure>
+
+
+</section>
+    <section id="cid6">
+      <title>Length 11 Module: 168 Adds / 40 Mpys</title>
+      <list id="id2256629" list-type="enumerated"><item id="uid26">Use the index map <m:math><m:mrow><m:mover accent="true"><m:mi>x</m:mi><m:mo>¯</m:mo></m:mover><m:mrow><m:mo>(</m:mo><m:mi>n</m:mi><m:mo>)</m:mo></m:mrow><m:mo>=</m:mo><m:mi>x</m:mi><m:mrow><m:mo>(</m:mo><m:mo>&lt;</m:mo><m:msup><m:mn>8</m:mn><m:mi>n</m:mi></m:msup><m:msub><m:mo>&gt;</m:mo><m:mrow><m:mi>m</m:mi><m:mi>o</m:mi><m:mi>d</m:mi><m:mn>11</m:mn></m:mrow></m:msub><m:mo>)</m:mo></m:mrow></m:mrow></m:math> to convert the DFT into a length 10 convolution, plus a correction term for the DC components.
+</item>
+        <item id="uid27">Reduce the length 10 convolution modulo all the irreducible factors of <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>10</m:mn></m:msup><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:math><equation id="id2256734"><m:math mode="display"><m:mtable displaystyle="true"><m:mtr><m:mtd columnalign="right"><m:mrow><m:mi>m</m:mi><m:mi>o</m:mi><m:mi>d</m:mi><m:msup><m:mi>z</m:mi><m:mn>5</m:mn></m:msup><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:mtd><m:mtd><m:mo>:</m:mo></m:mtd><m:mtd columnalign="left"><m:mrow><m:mi>T</m:mi><m:mn>1</m:mn><m:mo>,</m:mo><m:mi>T</m:mi><m:mn>3</m:mn><m:mo>,</m:mo><m:mi>T</m:mi><m:mn>2</m:mn><m:mo>,</m:mo><m:mi>T</m:mi><m:mn>5</m:mn><m:mo>,</m:mo><m:mi>T</m:mi><m:mn>4</m:mn></m:mrow></m:mtd></m:mtr><m:mtr><m:mtd columnalign="right"><m:mrow><m:mi>m</m:mi><m:mi>o</m:mi><m:mi>d</m:mi><m:msup><m:mi>z</m:mi><m:mn>5</m:mn></m:msup><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:mtd><m:mtd><m:mo>:</m:mo></m:mtd><m:mtd columnalign="left"><m:mrow><m:mi>T</m:mi><m:mn>6</m:mn><m:mo>,</m:mo><m:mo>-</m:mo><m:mi>T</m:mi><m:mn>8</m:mn><m:mo>,</m:mo><m:mo>-</m:mo><m:mi>T</m:mi><m:mn>7</m:mn><m:mo>,</m:mo><m:mo>-</m:mo><m:mi>T</m:mi><m:mn>10</m:mn><m:mo>,</m:mo><m:mi>T</m:mi><m:mn>9</m:mn></m:mrow></m:mtd></m:mtr></m:mtable></m:math></equation>
+from <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>5</m:mn></m:msup><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:math> data
+<equation id="id2256898"><m:math mode="display"><m:mtable displaystyle="true"><m:mtr><m:mtd columnalign="right"><m:mrow><m:mi>m</m:mi><m:mi>o</m:mi><m:mi>d</m:mi><m:mi>z</m:mi><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:mtd><m:mtd><m:mo>:</m:mo></m:mtd><m:mtd columnalign="left"><m:mrow><m:mi>T</m:mi><m:mn>13</m:mn></m:mrow></m:mtd></m:mtr><m:mtr><m:mtd columnalign="right"><m:mrow><m:mi>m</m:mi><m:mi>o</m:mi><m:mi>d</m:mi><m:msup><m:mi>z</m:mi><m:mn>5</m:mn></m:msup><m:mo>-</m:mo><m:mn>1</m:mn><m:mo>/</m:mo><m:mi>z</m:mi><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:mtd><m:mtd><m:mo>:</m:mo></m:mtd><m:mtd columnalign="left"><m:mrow><m:mi>A</m:mi><m:mi>M</m:mi><m:mn>4</m:mn><m:mo>,</m:mo><m:mi>A</m:mi><m:mi>M</m:mi><m:mn>7</m:mn><m:mo>,</m:mo><m:mi>A</m:mi><m:mi>M</m:mi><m:mn>3</m:mn><m:mo>,</m:mo><m:mi>A</m:mi><m:mi>M</m:mi><m:mn>6</m:mn><m:mo>(</m:mo><m:mi>a</m:mi><m:mi>f</m:mi><m:mi>t</m:mi><m:mi>e</m:mi><m:mi>r</m:mi><m:mi>w</m:mi><m:mi>e</m:mi><m:mi>i</m:mi><m:mi>g</m:mi><m:mi>h</m:mi><m:mi>t</m:mi><m:mi>i</m:mi><m:mi>n</m:mi><m:mi>g</m:mi><m:mo>)</m:mo></m:mrow></m:mtd></m:mtr></m:mtable></m:math></equation>
+from <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>5</m:mn></m:msup><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:math> data
+<equation id="id2257072"><m:math mode="display"><m:mtable displaystyle="true"><m:mtr><m:mtd columnalign="right"><m:mrow><m:mi>m</m:mi><m:mi>o</m:mi><m:mi>d</m:mi><m:mi>z</m:mi><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:mtd><m:mtd><m:mo>:</m:mo></m:mtd><m:mtd columnalign="left"><m:mrow><m:mi>A</m:mi><m:mi>M</m:mi><m:mn>2</m:mn><m:mo>(</m:mo><m:mi>a</m:mi><m:mi>f</m:mi><m:mi>t</m:mi><m:mi>e</m:mi><m:mi>r</m:mi><m:mi>w</m:mi><m:mi>e</m:mi><m:mi>i</m:mi><m:mi>g</m:mi><m:mi>h</m:mi><m:mi>t</m:mi><m:mi>i</m:mi><m:mi>n</m:mi><m:mi>g</m:mi><m:mo>)</m:mo></m:mrow></m:mtd></m:mtr><m:mtr><m:mtd columnalign="right"><m:mrow><m:mi>m</m:mi><m:mi>o</m:mi><m:mi>d</m:mi><m:msup><m:mi>z</m:mi><m:mn>5</m:mn></m:msup><m:mo>+</m:mo><m:mn>1</m:mn><m:mo>/</m:mo><m:mi>z</m:mi><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:mtd><m:mtd><m:mo>:</m:mo></m:mtd><m:mtd columnalign="left"><m:mrow><m:mi>S</m:mi><m:mn>9</m:mn><m:mo>,</m:mo><m:mi>S</m:mi><m:mn>11</m:mn><m:mo>,</m:mo><m:mi>S</m:mi><m:mn>10</m:mn><m:mo>,</m:mo><m:mi>S</m:mi><m:mn>12</m:mn><m:mo>(</m:mo><m:mi>a</m:mi><m:mi>p</m:mi><m:mi>p</m:mi><m:mi>e</m:mi><m:mi>a</m:mi><m:mi>r</m:mi><m:mi>s</m:mi><m:mi>i</m:mi><m:mi>n</m:mi><m:mo>)</m:mo></m:mrow></m:mtd></m:mtr></m:mtable></m:math></equation></item>
+        <item id="uid28">Patch up the DC terms by adding the <m:math><m:mrow><m:mi>z</m:mi><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:math> reduction result to <m:math><m:mrow><m:mi>X</m:mi><m:mo>(</m:mo><m:mi>I</m:mi><m:mo>(</m:mo><m:mn>1</m:mn><m:mo>)</m:mo><m:mo>)</m:mo></m:mrow></m:math> and store the result in AMO.
+</item>
+        <item id="uid29">The <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>5</m:mn></m:msup><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:math> convolution proceeds in four steps. First, do the irreducible factor reductions, then reduce further with an iterated Toom-Cook procedure, weight all remaining variables, and apply the transpose of the complete reduction stage to the weighted results. The first Toom-Cook reduction uses the factors <m:math><m:mi>z</m:mi></m:math>, <m:math><m:mrow><m:mn>1</m:mn><m:mo>/</m:mo><m:mi>z</m:mi></m:mrow></m:math> and <m:math><m:mrow><m:mi>z</m:mi><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:math> on the vectors AM4,AM3 and AM7,AM6 which generates the new vector AM4-AM7,AM3-AM6. Each of the original two vectors is then individually reduced using factors of <m:math><m:mi>z</m:mi></m:math>, <m:math><m:mrow><m:mn>1</m:mn><m:mo>/</m:mo><m:mi>z</m:mi></m:mrow></m:math> and <m:math><m:mrow><m:mi>z</m:mi><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:math>, while the new vector is reduced by <m:math><m:mi>A</m:mi></m:math>, <m:math><m:mrow><m:mn>1</m:mn><m:mo>/</m:mo><m:mi>z</m:mi></m:mrow></m:math> and <m:math><m:mrow><m:mi>z</m:mi><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:math>. This procedure generates nine variables: AM4,AM3,AM5; AM7,AM6,AM8; S7,S8,AM11. (The expressions for S6 and S8 contain the variables of interest).
+</item>
+        <item id="uid30">The nine variables from 4) are weighted along with T13.
+</item>
+        <item id="uid31">An exact transpose of the reduction algorithm is applied to the weighted variables (and AMO).
+</item>
+        <item id="uid32">The result S16,S15,S18,S17,S19 is the real part of the answer and is mapped back to the output using the map <m:math><m:mrow><m:mover accent="true"><m:mi>x</m:mi><m:mo>¯</m:mo></m:mover><m:mrow><m:mrow><m:mo>(</m:mo><m:mi>n</m:mi><m:mo>)</m:mo></m:mrow><m:mo>=</m:mo><m:mi>x</m:mi><m:mo>(</m:mo><m:mo>&lt;</m:mo></m:mrow><m:msup><m:mn>8</m:mn><m:mrow><m:mi>n</m:mi><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:msup><m:mo>&gt;</m:mo><m:mi>m</m:mi><m:mi>o</m:mi><m:mi>d</m:mi><m:mn>11</m:mn></m:mrow></m:math>. This is an unusual map, but it is perfectly acceptable.
+</item>
+        <item id="uid33">A in the length 19 transform the <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>5</m:mn></m:msup><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:math> convolution is computed with a variation of the <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>5</m:mn></m:msup><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:math> algorithm. First the inputs T6,-T8,-T7,-T1O,T9 are alternately negated, then the <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>5</m:mn></m:msup><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:math> algorithm is applied<footnote id="id1170773357356">The second stage of the Toom-Cook reductions uses the factors z, liz and z+l for all three length two vectors. Also, the DC patch is not used here.</footnote> and the outputs alternately negated.
+</item>
+        <item id="uid35">The result S21,S20,S23,S22,S24, representing the imaginary part of the answer, is mapped back to the output using the map <m:math><m:mrow><m:mover accent="true"><m:mi>x</m:mi><m:mo>¯</m:mo></m:mover><m:mrow><m:mo>(</m:mo><m:mi>n</m:mi><m:mo>)</m:mo></m:mrow><m:mo>=</m:mo><m:mi>x</m:mi><m:mrow><m:mo>(</m:mo><m:mo>&lt;</m:mo><m:msup><m:mn>8</m:mn><m:mrow><m:mi>n</m:mi><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:msup><m:mo>&gt;</m:mo><m:mi>m</m:mi><m:mi>o</m:mi><m:mi>d</m:mi><m:mn>11</m:mn><m:mo>)</m:mo></m:mrow></m:mrow></m:math>.
+</item>
+        <item id="uid36">In both this algorithm and the length 13 DFT plus and minus signs have been freely altered to force all constants to be positive. Also, many shortcut computations were used to save adds, obscuring in some places the logical flow of the algorithm.
+</item>
+        <item id="uid37">All coefficients were computed using the author's QR decomposition linear equation solver and are accurate to at least 14 places.
+</item>
+      </list>
+    </section>
+    <section id="cid7">
+      <title>Length 13 Module: 188 Adds / 40 Mpys</title>
+      <list id="id2257723" list-type="enumerated"><item id="uid38">Use the index map <m:math><m:mrow><m:mover accent="true"><m:mi>x</m:mi><m:mo>¯</m:mo></m:mover><m:mrow><m:mo>(</m:mo><m:mi>n</m:mi><m:mo>)</m:mo></m:mrow><m:mo>=</m:mo><m:mi>x</m:mi><m:mrow><m:mo>(</m:mo><m:mo>&lt;</m:mo><m:msup><m:mn>2</m:mn><m:mi>n</m:mi></m:msup><m:msub><m:mo>&gt;</m:mo><m:mrow><m:mi>m</m:mi><m:mi>o</m:mi><m:mi>d</m:mi><m:mn>13</m:mn></m:mrow></m:msub><m:mo>)</m:mo></m:mrow></m:mrow></m:math> to convert the DFT into a length 12 convolution, plus a correction term for the DC components.
+</item>
+        <item id="uid39">Reduce the length 12 convolution modulo all the irreducible factors of <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>12</m:mn></m:msup><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:math><equation id="id2257828"><m:math mode="display"><m:mtable displaystyle="true"><m:mtr><m:mtd columnalign="right"><m:mrow><m:mi>m</m:mi><m:mi>o</m:mi><m:mi>d</m:mi><m:msup><m:mi>z</m:mi><m:mn>6</m:mn></m:msup><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:mtd><m:mtd><m:mo>:</m:mo></m:mtd><m:mtd columnalign="left"><m:mrow><m:mi>A</m:mi><m:mn>7</m:mn><m:mo>,</m:mo><m:mi>A</m:mi><m:mn>8</m:mn><m:mo>,</m:mo><m:mi>A</m:mi><m:mn>9</m:mn><m:mo>,</m:mo><m:mi>A</m:mi><m:mn>10</m:mn><m:mo>,</m:mo><m:mi>A</m:mi><m:mn>11</m:mn><m:mo>,</m:mo><m:mi>A</m:mi><m:mn>12</m:mn></m:mrow></m:mtd></m:mtr><m:mtr><m:mtd columnalign="right"><m:mrow><m:mi>m</m:mi><m:mi>o</m:mi><m:mi>d</m:mi><m:msup><m:mi>z</m:mi><m:mn>6</m:mn></m:msup><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:mtd><m:mtd><m:mo>:</m:mo></m:mtd><m:mtd columnalign="left"><m:mrow><m:mi>A</m:mi><m:mn>1</m:mn><m:mo>,</m:mo><m:mi>A</m:mi><m:mn>2</m:mn><m:mo>,</m:mo><m:mi>A</m:mi><m:mn>3</m:mn><m:mo>,</m:mo><m:mi>A</m:mi><m:mn>4</m:mn><m:mo>,</m:mo><m:mi>A</m:mi><m:mn>5</m:mn><m:mo>,</m:mo><m:mi>A</m:mi><m:mn>6</m:mn></m:mrow></m:mtd></m:mtr></m:mtable></m:math></equation>
+from <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>6</m:mn></m:msup><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:math> data
+<equation id="id2257998"><m:math mode="display"><m:mtable displaystyle="true"><m:mtr><m:mtd columnalign="right"><m:mrow><m:mi>m</m:mi><m:mi>o</m:mi><m:mi>d</m:mi><m:msup><m:mi>z</m:mi><m:mn>2</m:mn></m:msup><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:mtd><m:mtd><m:mo>:</m:mo></m:mtd><m:mtd columnalign="left"><m:mrow><m:mi>A</m:mi><m:mn>14</m:mn><m:mo>,</m:mo><m:mi>A</m:mi><m:mn>13</m:mn></m:mrow></m:mtd></m:mtr><m:mtr><m:mtd columnalign="right"><m:mrow><m:mi>m</m:mi><m:mi>o</m:mi><m:mi>d</m:mi><m:msup><m:mi>z</m:mi><m:mn>2</m:mn></m:msup><m:mo>-</m:mo><m:mi>z</m:mi><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:mtd><m:mtd><m:mo>:</m:mo></m:mtd><m:mtd columnalign="left"><m:mrow><m:mi>A</m:mi><m:mn>23</m:mn><m:mo>,</m:mo><m:mi>A</m:mi><m:mn>22</m:mn></m:mrow></m:mtd></m:mtr><m:mtr><m:mtd columnalign="right"><m:mrow><m:mi>m</m:mi><m:mi>o</m:mi><m:mi>d</m:mi><m:msup><m:mi>z</m:mi><m:mn>2</m:mn></m:msup><m:mo>+</m:mo><m:mi>z</m:mi><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:mtd><m:mtd><m:mo>:</m:mo></m:mtd><m:mtd columnalign="left"><m:mrow><m:mi>A</m:mi><m:mn>25</m:mn><m:mo>,</m:mo><m:mi>A</m:mi><m:mn>24</m:mn></m:mrow></m:mtd></m:mtr></m:mtable></m:math></equation>
+from <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>2</m:mn></m:msup><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:math> data
+<equation id="id2258168"><m:math mode="display"><m:mtable displaystyle="true"><m:mtr><m:mtd columnalign="right"><m:mrow><m:mi>m</m:mi><m:mi>o</m:mi><m:mi>d</m:mi><m:mi>z</m:mi><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:mtd><m:mtd><m:mo>:</m:mo></m:mtd><m:mtd columnalign="left"><m:mrow><m:mi>A</m:mi><m:mn>15</m:mn></m:mrow></m:mtd></m:mtr><m:mtr><m:mtd columnalign="right"><m:mrow><m:mi>m</m:mi><m:mi>o</m:mi><m:mi>d</m:mi><m:mi>z</m:mi><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:mtd><m:mtd><m:mo>:</m:mo></m:mtd><m:mtd columnalign="left"><m:mrow><m:mi>i</m:mi><m:mi>m</m:mi><m:mi>p</m:mi><m:mi>l</m:mi><m:mi>i</m:mi><m:mi>c</m:mi><m:mi>i</m:mi><m:mi>t</m:mi><m:mo>(</m:mo><m:mi>A</m:mi><m:mn>13</m:mn><m:mo>-</m:mo><m:mi>A</m:mi><m:mn>14</m:mn><m:mo>)</m:mo></m:mrow></m:mtd></m:mtr></m:mtable></m:math></equation>
+from <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>6</m:mn></m:msup><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:math> data
+<equation id="id2258291"><m:math mode="display"><m:mtable displaystyle="true"><m:mtr><m:mtd columnalign="right"><m:mrow><m:mi>m</m:mi><m:mi>o</m:mi><m:mi>d</m:mi><m:msup><m:mi>z</m:mi><m:mn>2</m:mn></m:msup><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:mtd><m:mtd><m:mo>:</m:mo></m:mtd><m:mtd columnalign="left"><m:mrow><m:mi>A</m:mi><m:mn>17</m:mn><m:mo>,</m:mo><m:mi>A</m:mi><m:mn>16</m:mn></m:mrow></m:mtd></m:mtr><m:mtr><m:mtd columnalign="right"><m:mrow><m:mi>m</m:mi><m:mi>o</m:mi><m:mi>d</m:mi><m:msup><m:mi>z</m:mi><m:mn>4</m:mn></m:msup><m:mo>-</m:mo><m:msup><m:mi>z</m:mi><m:mn>2</m:mn></m:msup><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:mtd><m:mtd><m:mo>:</m:mo></m:mtd><m:mtd columnalign="left"><m:mrow><m:mi>A</m:mi><m:mn>27</m:mn><m:mo>,</m:mo><m:mi>A</m:mi><m:mn>26</m:mn><m:mo>,</m:mo><m:mo>-</m:mo><m:mi>A</m:mi><m:mn>31</m:mn><m:mo>,</m:mo><m:mo>-</m:mo><m:mi>A</m:mi><m:mn>30</m:mn></m:mrow></m:mtd></m:mtr></m:mtable></m:math></equation></item>
+        <item id="uid40">Patch up the DC terms by adding the <m:math><m:mrow><m:mi>z</m:mi><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:math> reduction result to <m:math><m:mrow><m:mi>X</m:mi><m:mo>(</m:mo><m:mi>I</m:mi><m:mo>(</m:mo><m:mn>1</m:mn><m:mo>)</m:mo><m:mo>)</m:mo></m:mrow></m:math> and store the result in AMO.
+</item>
+        <item id="uid41">The <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>2</m:mn></m:msup><m:mo>-</m:mo><m:mi>z</m:mi><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:math> and <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>2</m:mn></m:msup><m:mo>+</m:mo><m:mi>z</m:mi><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:math> convolutions are reduced using Toom-cook factors of <m:math><m:mi>z</m:mi></m:math>, <m:math><m:mrow><m:mn>1</m:mn><m:mo>/</m:mo><m:mi>z</m:mi></m:mrow></m:math> and <m:math><m:mrow><m:mi>z</m:mi><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:math> in one case and <m:math><m:mi>z</m:mi></m:math>, <m:math><m:mrow><m:mn>1</m:mn><m:mo>/</m:mo><m:mi>z</m:mi></m:mrow></m:math> and <m:math><m:mrow><m:mi>z</m:mi><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:math> in the other case, and then all the reduced quantities are weighted by constants generating new variables:
+from <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>2</m:mn></m:msup><m:mo>-</m:mo><m:mi>z</m:mi><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:math><equation id="id2258625"><m:math mode="display"><m:mtable displaystyle="true"><m:mtr><m:mtd columnalign="right"><m:mi>z</m:mi></m:mtd><m:mtd/><m:mtd columnalign="left"><m:mrow><m:mi>A</m:mi><m:mi>M</m:mi><m:mn>7</m:mn></m:mrow></m:mtd></m:mtr><m:mtr><m:mtd columnalign="right"><m:mrow><m:mn>1</m:mn><m:mo>/</m:mo><m:mi>z</m:mi></m:mrow></m:mtd><m:mtd/><m:mtd columnalign="left"><m:mrow><m:mi>A</m:mi><m:mi>M</m:mi><m:mn>6</m:mn></m:mrow></m:mtd></m:mtr><m:mtr><m:mtd columnalign="right"><m:mrow><m:mi>z</m:mi><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:mtd><m:mtd/><m:mtd columnalign="left"><m:mrow><m:mi>A</m:mi><m:mi>M</m:mi><m:mn>8</m:mn></m:mrow></m:mtd></m:mtr></m:mtable></m:math></equation>
+from <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>2</m:mn></m:msup><m:mo>+</m:mo><m:mi>z</m:mi><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:math><equation id="id2258729"><m:math mode="display"><m:mtable displaystyle="true"><m:mtr><m:mtd columnalign="right"><m:mi>z</m:mi></m:mtd><m:mtd/><m:mtd columnalign="left"><m:mrow><m:mi>A</m:mi><m:mi>M</m:mi><m:mn>10</m:mn></m:mrow></m:mtd></m:mtr><m:mtr><m:mtd columnalign="right"><m:mrow><m:mn>1</m:mn><m:mo>/</m:mo><m:mi>z</m:mi></m:mrow></m:mtd><m:mtd/><m:mtd columnalign="left"><m:mrow><m:mi>A</m:mi><m:mi>M</m:mi><m:mn>9</m:mn></m:mrow></m:mtd></m:mtr><m:mtr><m:mtd columnalign="right"><m:mrow><m:mi>z</m:mi><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:mtd><m:mtd/><m:mtd columnalign="left"><m:mrow><m:mi>A</m:mi><m:mi>M</m:mi><m:mn>1</m:mn><m:mn>1</m:mn></m:mrow></m:mtd></m:mtr></m:mtable></m:math></equation></item>
+        <item id="uid42">The original <m:math><m:mrow><m:mi>m</m:mi><m:mi>o</m:mi><m:mi>d</m:mi><m:mi>z</m:mi><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:math> reduction quantity is weighted and passed, along with AMO and the above six variables, to a reconstruction procedure which first combines the <m:math><m:mrow><m:mi>z</m:mi><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:math> and <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>2</m:mn></m:msup><m:mo>+</m:mo><m:mi>z</m:mi><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:math> data to compute the convolution mod <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>3</m:mn></m:msup><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:math> (CC4,CC5,CC6), and then combines the <m:math><m:mrow><m:mi>z</m:mi><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:math> and <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>2</m:mn></m:msup><m:mo>-</m:mo><m:mi>z</m:mi><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:math> data to compute the convolution mod <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>3</m:mn></m:msup><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:math> (CC1,CC2,CC3). These two vectors are combined to compute the complete <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>6</m:mn></m:msup><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:math> output, which appears in permuted form in CC15 through CC20.
+</item>
+        <item id="uid43">The <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>2</m:mn></m:msup><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:math> vector is decomposed with Toom-Cook factors of <m:math><m:mi>z</m:mi></m:math>, <m:math><m:mrow><m:mn>1</m:mn><m:mo>/</m:mo><m:mi>z</m:mi></m:mrow></m:math> and <m:math><m:mrow><m:mi>z</m:mi><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:math> yielding A17,A16 and the implicit term (A16+A17).
+</item>
+        <item id="uid44">The <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>4</m:mn></m:msup><m:mo>-</m:mo><m:msup><m:mi>z</m:mi><m:mn>2</m:mn></m:msup><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:math> vector is decomposed with a double iterated Toom-Cook scheme. First the vector is broken into two length two pieces: A27,A26 and A31,A30. Then the vectors are reduced by the factors of <m:math><m:mi>z</m:mi></m:math>, <m:math><m:mrow><m:mn>1</m:mn><m:mo>/</m:mo><m:mi>z</m:mi></m:mrow></m:math> and <m:math><m:mrow><m:mi>z</m:mi><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:math> operating on whole vectors to produce a set of three length two vectors:
+
+Ā27,A26
+A31,A30
+A29,A28 = (A27+A31), (A26+A30)
+These vectors are not calculated in a straightforward manner. Each length two vector is further reduced, in the second iteration, by the factors <m:math><m:mi>z</m:mi></m:math>, <m:math><m:mrow><m:mn>1</m:mn><m:mo>/</m:mo><m:mi>z</m:mi></m:mrow></m:math> and <m:math><m:mrow><m:mi>z</m:mi><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:math> to create three new implicit variables
+<m:math><m:mrow><m:mo>(</m:mo><m:mi>A</m:mi><m:mn>27</m:mn><m:mo>+</m:mo><m:mi>A</m:mi><m:mn>26</m:mn><m:mo>)</m:mo></m:mrow></m:math>, <m:math><m:mrow><m:mo>(</m:mo><m:mi>A</m:mi><m:mn>31</m:mn><m:mo>+</m:mo><m:mi>A</m:mi><m:mn>30</m:mn><m:mo>)</m:mo></m:mrow></m:math> and <m:math><m:mrow><m:mo>(</m:mo><m:mi>A</m:mi><m:mn>29</m:mn><m:mo>+</m:mo><m:mi>A</m:mi><m:mn>28</m:mn><m:mo>)</m:mo></m:mrow></m:math>.
+</item>
+        <item id="uid45">The nine variables from <link target-id="cid6"/> and the three variables from <link target-id="cid5"/> are weighted by constants and the <m:math><m:mrow><m:mi>m</m:mi><m:mi>o</m:mi><m:mi>d</m:mi><m:msup><m:mi>z</m:mi><m:mn>6</m:mn></m:msup><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:math> reconstruction proceeds in an ad-hoc fashion which closely resembles a transposed tensor method, but has some differences. The add count for the reconstruction would have been the same if the transposed tensor method had been applied. The <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>6</m:mn></m:msup><m:mo>+</m:mo><m:mn>1</m:mn></m:mrow></m:math> result appears in permuted form in variables CC21 through CC26.
+</item>
+        <item id="uid46">The final result is reconstructed from the <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>6</m:mn></m:msup><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:math> and <m:math><m:mrow><m:msup><m:mi>z</m:mi><m:mn>6</m:mn></m:msup><m:mo>-</m:mo><m:mn>1</m:mn></m:mrow></m:math> vectors. The DC term, <m:math><m:mrow><m:mi>x</m:mi><m:mo>(</m:mo><m:mi>i</m:mi><m:mo>(</m:mo><m:mn>1</m:mn><m:mo>)</m:mo><m:mo>)</m:mo></m:mrow></m:math> is set equal' to AMO.
+</item>
+        <item id="uid47">All coefficients were computed using the author's QR decomposition linear
+equation solver and are accurate to at least 14 places.
+</item>
+      </list>
+    </section>
+    
+  </content>
+  <bib:file>
+    <bib:entry id="bid3">
+      <bib:article>
+<!--required fields-->
+        <bib:author>Burrus, C. S. and Eschenbacker, P. W.</bib:author>
+        <bib:title>An In-Place, In-Order Prime Factor FFT Algorithm</bib:title>
+        <bib:journal>IEEE Trans. ASSP</bib:journal>
+        <bib:year>1981</bib:year>
+<!--optional fields-->
+        <bib:volume>29</bib:volume>
+        <bib:number/>
+        <bib:pages/>
+        <bib:month>August</bib:month>
+        <bib:note/>
+      </bib:article>
+    </bib:entry>
+    <bib:entry id="bid6">
+      <bib:article>
+<!--required fields-->
+        <bib:author>Burrus, C.S.</bib:author>
+        <bib:title>Index Mappings for Multidimensional Formulation of the DFT and Convolution</bib:title>
+        <bib:journal>IEEE Trans. ASSP</bib:journal>
+        <bib:year>1977</bib:year>
+<!--optional fields-->
+        <bib:volume/>
+        <bib:number/>
+        <bib:pages/>
+        <bib:month>June</bib:month>
+        <bib:note/>
+      </bib:article>
+    </bib:entry>
+    <bib:entry id="bid2">
+      <bib:phdthesis>
+<!--required fields-->
+        <bib:author>Johnson, H. W.</bib:author>
+        <bib:title>An Approach to the Design of Large DFT's</bib:title>
+        <bib:school>Rice University</bib:school>
+        <bib:year>1982</bib:year>
+<!--optional fields-->
+        <bib:type>Ph. D. Thesis</bib:type>
+        <bib:address/>
+        <bib:month/>
+        <bib:note/>
+      </bib:phdthesis>
+    </bib:entry>
+ <bib:entry id="bid5">
+      <bib:book>
+<!--required fields-->
+        <bib:author>McClellan, J. H., and Rader, C. M.</bib:author>
+        <bib:title>Number Theory in Digital Signal Processing</bib:title>
+        <bib:publisher>Prentice-Hall</bib:publisher>
+        <bib:year>1979</bib:year>
+<!--optional fields-->
+        <bib:volume/>
+        <bib:series/>
+        <bib:address/>
+        <bib:edition/>
+        <bib:month/>
+        <bib:note/>
+      </bib:book>
+    </bib:entry>
+    <bib:entry id="bid4">
+      <bib:book>
+<!--required fields-->
+        <bib:author>Nussbaumer, H. J.</bib:author>
+        <bib:title>FFT and Convolution Algorithms</bib:title>
+        <bib:publisher>Springer-Verlag</bib:publisher>
+        <bib:year>1981</bib:year>
+<!--optional fields-->
+        <bib:volume/>
+        <bib:series/>
+        <bib:address/>
+        <bib:edition/>
+        <bib:month/>
+        <bib:note/>
+      </bib:book>
+    </bib:entry>
+    <bib:entry id="bid1">
+      <bib:article>
+<!--required fields-->
+        <bib:author>Rice, B.</bib:author>
+        <bib:title>Winograd Convolution Algorithms over Finite Fields</bib:title>
+        <bib:journal>Congressus Numeratium</bib:journal>
+        <bib:year>1979</bib:year>
+<!--optional fields-->
+        <bib:volume>29</bib:volume>
+        <bib:number/>
+        <bib:pages>827</bib:pages>
+        <bib:month>August</bib:month>
+        <bib:note/>
+      </bib:article>
+    </bib:entry>
+    <bib:entry id="bid8">
+      <bib:article>
+<!--required fields-->
+        <bib:author>Silverman, H. F.</bib:author>
+        <bib:title>An Introduction to Programming the Winograd Fourier Transform Algorithm</bib:title>
+        <bib:journal>IEEE Trans. ASSP</bib:journal>
+        <bib:year>1977</bib:year>
+<!--optional fields-->
+        <bib:volume/>
+        <bib:number/>
+        <bib:pages/>
+        <bib:month>April</bib:month>
+        <bib:note/>
+      </bib:article>
+    </bib:entry>
+    <bib:entry id="bid0">
+      <bib:techreport>
+<!--required fields-->
+        <bib:author>S.S. Narayan, M.H. Narasimha and Peterson, A.M.</bib:author>
+        <bib:title>DFT Algorithms Analysis and Implementation</bib:title>
+        <bib:institution>Standford University</bib:institution>
+        <bib:year>1978</bib:year>
+<!--optional fields-->
+        <bib:type>Report No. 3606-12</bib:type>
+        <bib:number/>
+        <bib:address/>
+        <bib:month>May</bib:month>
+        <bib:note>There are several errors in the algoritms in this report.</bib:note>
+      </bib:techreport>
+    </bib:entry>
+    <bib:entry id="bid7">
+      <bib:article>
+<!--required fields-->
+        <bib:author>Zohar, S.</bib:author>
+        <bib:title>A Prescription of Winograd's Discrete Fourier Transform Algorithm</bib:title>
+        <bib:journal>IEEE Trans. ASSP</bib:journal>
+        <bib:year>1979</bib:year>
+<!--optional fields-->
+        <bib:volume/>
+        <bib:number/>
+        <bib:pages/>
+        <bib:month>August</bib:month>
+        <bib:note/>
+      </bib:article>
+    </bib:entry>
+  </bib:file>
+</document>

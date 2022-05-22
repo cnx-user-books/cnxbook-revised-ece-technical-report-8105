@@ -1,0 +1,163 @@
+<document xmlns="http://cnx.rice.edu/cnxml" xmlns:bib="http://bibtexml.sf.net/">
+  <title>N = 11 Winograd FFT module</title>
+  <metadata xmlns:md="http://cnx.rice.edu/mdml">
+  <md:content-id>m17377</md:content-id>
+  <md:title>N = 11 Winograd FFT module</md:title>
+  <md:abstract>A very efficient length N = 11 FFT module that can be use alone or with the PFA or the WFTA.  Designed by Howard Johnson in 1981.</md:abstract>
+  <md:uuid>4217e41a-317e-4b8c-b9e9-bd80f76957e1</md:uuid>
+</metadata>
+
+<content>
+    <section id="uid1">
+      <title>N=11 FFT module</title>
+      <para id="id2255547">A FORTRAN implementation of a length-11 FFT module to be
+used in a Prime Factor Algorithm program.</para>
+      <code id="id7938202" display="block">C
+    DATA  C111,C112 /  1.10000000, 0.33166250 /
+    DATA  C113,C114 /  0.51541500, 0.94125350 /
+    DATA  C115,C116 /  1.41435370, 0.85949300 /
+    DATA  C117,C118 /  0.04231480, 0.38639280 /
+    DATA  C119,C1110/  0.51254590, 1.07027569 /
+    DATA  C1111,C1112/ 0.55486070, 1.24129440 /
+    DATA  C1113,C1114/ 0.20897830, 0.37415717 /
+    DATA  C1115,C1116/ 0.04992992, 0.65815896 /
+    DATA  C1117,C1118/ 0.63306543, 1.08224607 /
+    DATA  C1119,C1120/ 0.81720738, 0.42408709 /
+C
+C-----------------WFTA N=11----------------------------
+C
+  111   T1 = X(I(2)) + X(I(11))
+    T6 = X(I(2)) - X(I(11))
+    T2 = X(I(3)) + X(I(10))
+    T7 = X(I(3)) - X(I(10))
+    T3 = X(I(4)) + X(I(9))
+    T8 = X(I(4)) - X(I(9))
+    T4 = X(I(5)) + X(I(8))
+    T9 = X(I(5)) - X(I(8))
+    T5 = X(I(6)) + X(I(7))
+    T10= X(I(6)) - X(I(7))
+C
+    U1 = Y(I(2)) + Y(I(11))
+    U6 = Y(I(2)) - Y(I(11))
+    U2 = Y(I(3)) + Y(I(10))
+    U7 = Y(I(3)) - Y(I(10))
+    U3 = Y(I(4)) + Y(I(9))
+    U8 = Y(I(4)) - Y(I(9))
+    U4 = Y(I(5)) + Y(I(8))
+    U9 = Y(I(5)) - Y(I(8))
+    U5 = Y(I(6)) + Y(I(7))
+    U10= Y(I(6)) - Y(I(7))
+C
+    T11 = T1 + T2
+    T12 = T3 + T5
+    T13 = T4 + T11 + T12
+    T14 = T7 - T8
+    T15 = T6 + T10
+C
+    U11 = U1 + U2
+    U12 = U3 + U5
+    U13 = U4 + U11 + U12
+    U14 = U7 - U8
+    U15 = U6 + U10
+C
+    AM0 = X(I(1)) + T13
+    AM2 = (T14 - T15 - T9) * C112
+    AM3 = (T2 - T4) * C113
+    AM4 = (T1 - T4) * C114
+    AM5 = (T2 - T1) * C115
+    AM6 = (T5 - T4) * C116
+    AM7 = (T3 - T4) * C117
+    AM8 = (T5 - T3) * C118
+    AM11 = (T12 - T11) * C1111
+    AM14 = (T6 + T7) * C1114
+    AM17 = (T8 - T10) * C1117
+    AM20 = (T14 + T15) * C1120
+C
+    AN0 = Y(I(1)) + U13
+    AN2 = (U14 - U15 - U9) * C112
+    AN3 = (U2 - U4) * C113
+    AN4 = (U1 - U4) * C114
+    AN5 = (U2 - U1) * C115
+    AN6 = (U5 - U4) * C116
+    AN7 = (U3 - U4) * C117
+    AN8 = (U5 - U3) * C118
+    AN11 = (U12 - U11) * C1111
+    AN14 = (U6 + U7) * C1114
+    AN17 = (U8 - U10) * C1117
+    AN20 = (U14 + U15) * C1120
+C
+    S0 = AM0 - C111 * T13
+    S7 = AM11 + C1110 * (T1 - T3)
+    S8 = AM11 + (T2 - T5) * C119
+    S9 = AM14 + (T6 - T9) * C1113
+    S10 =-AM14 + (T7 + T9) * C1112
+    S11 = AM17 + (T8 - T9) * C1116
+    S12 =-AM17 + (T9 - T10) * C1115
+    S13 = AM20 + (T6 - T8) * C1119
+    S14 =-AM20 + (T7 + T10) * C1118
+C
+    V0 = AN0 - C111 * U13
+    V7 = AN11 + C1110 * (U1 - U3)
+    V8 = AN11 + (U2 - U5) * C119
+    V9 = AN14 + (U6 - U9) * C1113
+    V10 =-AN14 + (U7 + U9) * C1112
+    V11 = AN17 + (U8 - U9) * C1116
+    V12 =-AN17 + (U9 - U10) * C1115
+    V13 = AN20 + (U6 - U8) * C1119
+    V14 =-AN20 + (U7 + U10) * C1118
+C
+    S15 = S0 + S7 + AM7 + AM8
+    S16 = S0 - S7 - AM4 - AM5
+    S17 = S0 + S8 + AM6 - AM8
+    S18 = S0 - S8 - AM3 + AM5
+    S19 = S0 + AM3 + AM4 - AM6 - AM7
+    S20 = S13 + AM2 + S11
+    S21 = S13 - AM2 - S9
+    S22 = S14 + AM2 + S12
+    S23 = S14 - AM2 - S10
+    S24 = S9 + S10 + S11 + S12 - AM2
+C
+    V15 = V0 + V7 + AN7 + AN8
+    V16 = V0 - V7 - AN4 - AN5
+    V17 = V0 + V8 + AN6 - AN8
+    V18 = V0 - V8 - AN3 + AN5
+    V19 = V0 + AN3 + AN4 - AN6 - AN7
+    V20 = V13 + AN2 + V11
+    V21 = V13 - AN2 - V9
+    V22 = V14 + AN2 + V12
+    V23 = V14 - AN2 - V10
+    V24 = V9 + V10 + V11 + V12 - AN2
+C
+    X(I(1)) = AM0
+    X(I(2)) = S19 + V24
+    X(I(3)) = S15 + V20
+    X(I(4)) = S16 + V21
+    X(I(5)) = S17 - V22
+    X(I(6)) = S18 + V23
+    X(I(7)) = S18 - V23
+    X(I(8)) = S17 + V22
+    X(I(9)) = S16 - V21
+    X(I(10))= S15 - V20
+    X(I(11))= S19 - V24
+C
+    Y(I(1)) = AN0
+    Y(I(2)) = V19 - S24
+    Y(I(3)) = V15 - S20
+    Y(I(4)) = V16 - S21
+    Y(I(5)) = V17 + S22
+    Y(I(6)) = V18 - S23
+    Y(I(7)) = V18 + S23
+    Y(I(8)) = V17 - S22
+    Y(I(9)) = V16 + S21
+    Y(I(10))= V15 + S20
+    Y(I(11))= V19 + S24
+C
+    GOTO 20
+C
+ 
+Figure.  Length-11 FFT Module
+</code>
+    </section>
+  </content>
+  <bib:file/>
+</document>
